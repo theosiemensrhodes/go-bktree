@@ -1,3 +1,5 @@
+// Copyright 2014 Mahmud Ridwan. All rights reserved.
+
 package bktree
 
 import (
