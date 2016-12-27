@@ -42,13 +42,18 @@ func (t *BKTree) ReadFromFile(dbFile string) (err error) {
 }
 
 // Serialize into file
-func (t *BKTree) SaveToFile(filePath string) error {
-	if t.root == nil {return} // nothing to save
-	data, err := proto.Marshal(t.root)
-	if err != nil {return err}
-	err = ioutil.WriteFile(filePath, data, 0644)
-	t.dirty = err != nil
-	return err
+func (t *BKTree) SaveToFile(filePath string) (saved bool, err error) {
+	saved = false
+	if t.dirty && t.root != nil {
+		var data []byte
+		data, err = proto.Marshal(t.root)
+		if err != nil {return}
+		err = ioutil.WriteFile(filePath, data, 0644)
+		if err != nil {return}
+		t.dirty = false
+		saved = true
+	}
+	return
 
 }
 
