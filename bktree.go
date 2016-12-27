@@ -5,13 +5,18 @@
 // A BK-tree is a metric tree suggested by Walter Austin Burkhard and Robert M. Keller specifically adapted to discrete metric spaces.
 package bktree
 
+import (
+	"io/ioutil"
+	"github.com/gogo/protobuf/proto"
+)
+
 // The Metric type is a function used by BK-tree instances to measure the distance between two given strings.
 type Metric func(a, b string) int
 
 // BKTree represents a BK-tree with a given metric function.
 type BKTree struct {
 	Metric Metric // Metric function, required
-	root   *node
+	root   *Node
 }
 
 // New returns an initialized BK-tree.
@@ -21,50 +26,67 @@ func New(m Metric) *BKTree {
 	}
 }
 
+// Read data structures from file
+func (t *BKTree) ReadFromFile(dbFile string) (err error) {
+	data, err := ioutil.ReadFile(dbFile)
+	if err != nil {return}
+	root := &Node{}
+	err = proto.Unmarshal(data, root)
+	if err != nil {return}
+
+	t.root = root
+
+	return
+}
+
+// Serialize into file
+func (t *BKTree) SaveToFile(filePath string) error {
+	data, err := proto.Marshal(t.root)
+	if err != nil {return err}
+	return ioutil.WriteFile(filePath, data, 0644)
+}
+
 // Add inserts a new word to the BK-tree.
 func (t *BKTree) Add(w string) {
 	if t.root == nil {
-		t.root = &node{w, make(map[int]*node)}
+		t.root = &Node{w, make(map[int64]*Node)}
 	} else {
-		t.root.add(w, t.Metric)
+		t.root.Add(w, t.Metric)
 	}
 }
 
 // Find returns all the words in the BK-tree with a distance of n from w.
-func (t *BKTree) Find(w string, n int) []string {
+func (t *BKTree) Find(w string, n int64) []string {
 	r := []string{}
 	if t.root != nil {
-		r = t.root.find(w, n, -1, t.Metric, r)
+		r = t.root.Find(w, n, -1, t.Metric, r)
 	}
 	return r
 }
 
-type node struct {
-	word   string
-	childs map[int]*node
-}
 
-func (e *node) add(w string, m Metric) {
-	d := m(e.word, w)
-	if c, ok := e.childs[d]; !ok {
-		e.childs[d] = &node{w, make(map[int]*node)}
+func (e *Node) Add(w string, m Metric) {
+	d := int64(m(e.Word, w))
+	if c, ok := e.Children[d]; !ok {
+		e.Children[d] = &Node{w, make(map[int64]*Node)}
 	} else {
-		c.add(w, m)
+		c.Add(w, m)
 	}
 }
 
-func (e *node) find(w string, n, d int, m Metric, r []string) []string {
-	l := m(e.word, w)
+func (e *Node) Find(w string, n, d int64, m Metric, r []string) []string {
+	l := int64(m(e.Word, w))
 	if l <= n {
-		r = append(r, e.word)
+		r = append(r, e.Word)
 	}
 	if d == -1 {
 		d = l
 	}
 	for i := n - d; i <= n+d; i++ {
-		if c, ok := e.childs[i]; ok {
-			r = c.find(w, n, d, m, r)
+		if c, ok := e.Children[i]; ok {
+			r = c.Find(w, n, d, m, r)
 		}
 	}
 	return r
 }
+

@@ -7,7 +7,47 @@ import (
 	"testing"
 
 	"github.com/arbovm/levenshtein"
+	"io/ioutil"
+	"os"
 )
+
+func TestFile(t *testing.T) {
+
+	filePath := testFileWrite(t, dictLg)
+	testFileRead(t, dictLg, filePath)
+
+}
+
+func testFileRead(t *testing.T, dict []string, filePath string) {
+
+	defer os.Remove(filePath)
+
+	bk := New(levenshtein.Distance)
+	err := bk.ReadFromFile(filePath)
+
+	if err != nil {t.Fatal("Error on reading file.", err)}
+
+	testFindWithBK(t, dict, bk)
+
+}
+
+func testFileWrite(t *testing.T, dict []string) (filePath string){
+	bk := New(levenshtein.Distance)
+
+	for _, w := range dict {
+		bk.Add(w)
+	}
+
+	file, err := ioutil.TempFile(os.TempDir(), "bktree-test")
+	if err != nil {t.Fatal("Error on saving file.", err.Error())}
+
+	filePath = file.Name()
+	file.Close()
+
+	bk.SaveToFile(filePath)
+
+	return
+}
 
 func TestFindSm(t *testing.T) {
 	testFind(t, dictSm)
@@ -42,6 +82,10 @@ func testFind(t *testing.T, dict []string) {
 		bk.Add(w)
 	}
 
+	testFindWithBK(t, dict, bk)
+}
+
+func testFindWithBK(t *testing.T, dict []string, bk *BKTree) {
 	for i := 0; i < 128; i++ {
 		m := mess(pick(dict), 4)
 

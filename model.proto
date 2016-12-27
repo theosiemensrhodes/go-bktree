@@ -1,0 +1,6 @@
+syntax="proto3";
+// protoc model.proto --go_out=.
+message Node {
+    string word = 1;
+    map<int64, Node> children = 2;
+}
