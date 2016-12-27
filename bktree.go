@@ -11,18 +11,20 @@ import (
 )
 
 // The Metric type is a function used by BK-tree instances to measure the distance between two given strings.
-type Metric func(a, b string) int
+type Metric func(a, b []byte) int
 
 // BKTree represents a BK-tree with a given metric function.
 type BKTree struct {
 	Metric Metric // Metric function, required
 	root   *Node
+	dirty bool
 }
 
 // New returns an initialized BK-tree.
 func New(m Metric) *BKTree {
 	return &BKTree{
 		Metric: m,
+		dirty: false,
 	}
 }
 
@@ -41,50 +43,55 @@ func (t *BKTree) ReadFromFile(dbFile string) (err error) {
 
 // Serialize into file
 func (t *BKTree) SaveToFile(filePath string) error {
+	if t.root == nil {return} // nothing to save
 	data, err := proto.Marshal(t.root)
 	if err != nil {return err}
-	return ioutil.WriteFile(filePath, data, 0644)
+	err = ioutil.WriteFile(filePath, data, 0644)
+	t.dirty = err != nil
+	return err
+
 }
 
 // Add inserts a new word to the BK-tree.
-func (t *BKTree) Add(w string) {
+func (t *BKTree) Add(data []byte) {
 	if t.root == nil {
-		t.root = &Node{w, make(map[int64]*Node)}
+		t.root = &Node{data, make(map[int64]*Node)}
 	} else {
-		t.root.Add(w, t.Metric)
+		t.root.Add(data, t.Metric)
 	}
+	t.dirty = true
 }
 
 // Find returns all the words in the BK-tree with a distance of n from w.
-func (t *BKTree) Find(w string, n int64) []string {
-	r := []string{}
+func (t *BKTree) Find(data []byte, n int64) [][]byte {
+	r := [][]byte{}
 	if t.root != nil {
-		r = t.root.Find(w, n, -1, t.Metric, r)
+		r = t.root.Find(data, n, -1, t.Metric, r)
 	}
 	return r
 }
 
 
-func (e *Node) Add(w string, m Metric) {
-	d := int64(m(e.Word, w))
+func (e *Node) Add(data []byte, m Metric) {
+	d := int64(m(e.Data, data))
 	if c, ok := e.Children[d]; !ok {
-		e.Children[d] = &Node{w, make(map[int64]*Node)}
+		e.Children[d] = &Node{data, make(map[int64]*Node)}
 	} else {
-		c.Add(w, m)
+		c.Add(data, m)
 	}
 }
 
-func (e *Node) Find(w string, n, d int64, m Metric, r []string) []string {
-	l := int64(m(e.Word, w))
+func (e *Node) Find(data []byte, n, d int64, m Metric, r [][]byte) [][]byte {
+	l := int64(m(e.Data, data))
 	if l <= n {
-		r = append(r, e.Word)
+		r = append(r, e.Data)
 	}
 	if d == -1 {
 		d = l
 	}
 	for i := n - d; i <= n+d; i++ {
 		if c, ok := e.Children[i]; ok {
-			r = c.Find(w, n, d, m, r)
+			r = c.Find(data, n, d, m, r)
 		}
 	}
 	return r

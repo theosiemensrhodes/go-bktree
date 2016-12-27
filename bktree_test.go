@@ -1,15 +1,16 @@
 // Copyright 2014 Mahmud Ridwan. All rights reserved.
-
 package bktree
-
 import (
 	"math/rand"
 	"testing"
-
 	"github.com/arbovm/levenshtein"
 	"io/ioutil"
 	"os"
 )
+
+func levenshteinFromBytes(a,b []byte) int {
+	return levenshtein.Distance(string(a), string(b))
+}
 
 func TestFile(t *testing.T) {
 
@@ -22,7 +23,7 @@ func testFileRead(t *testing.T, dict []string, filePath string) {
 
 	defer os.Remove(filePath)
 
-	bk := New(levenshtein.Distance)
+	bk := New(levenshteinFromBytes)
 	err := bk.ReadFromFile(filePath)
 
 	if err != nil {t.Fatal("Error on reading file.", err)}
@@ -32,10 +33,10 @@ func testFileRead(t *testing.T, dict []string, filePath string) {
 }
 
 func testFileWrite(t *testing.T, dict []string) (filePath string){
-	bk := New(levenshtein.Distance)
+	bk := New(levenshteinFromBytes)
 
 	for _, w := range dict {
-		bk.Add(w)
+		bk.Add([]byte(w))
 	}
 
 	file, err := ioutil.TempFile(os.TempDir(), "bktree-test")
@@ -76,10 +77,10 @@ func BenchmarkFindLg(b *testing.B) {
 }
 
 func testFind(t *testing.T, dict []string) {
-	bk := New(levenshtein.Distance)
+	bk := New(levenshteinFromBytes)
 
 	for _, w := range dict {
-		bk.Add(w)
+		bk.Add([]byte(w))
 	}
 
 	testFindWithBK(t, dict, bk)
@@ -89,12 +90,12 @@ func testFindWithBK(t *testing.T, dict []string, bk *BKTree) {
 	for i := 0; i < 128; i++ {
 		m := mess(pick(dict), 4)
 
-		r := bk.Find(m, 4)
+		r := bk.Find([]byte(m), 4)
 		if len(r) == 0 {
 			t.FailNow()
 		}
 		for _, w := range r {
-			if levenshtein.Distance(m, w) > 4 {
+			if levenshtein.Distance(m, string(w)) > 4 {
 				t.FailNow()
 			}
 		}
@@ -102,10 +103,10 @@ func testFindWithBK(t *testing.T, dict []string, bk *BKTree) {
 }
 
 func benchmarkFind(b *testing.B, dict []string) {
-	bk := New(levenshtein.Distance)
+	bk := New(levenshteinFromBytes)
 
 	for _, w := range dict {
-		bk.Add(w)
+		bk.Add([]byte(w))
 	}
 
 	s := []string{}
@@ -114,7 +115,7 @@ func benchmarkFind(b *testing.B, dict []string) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		bk.Find(s[i], 4)
+		bk.Find([]byte(s[i]), 4)
 	}
 }
 
