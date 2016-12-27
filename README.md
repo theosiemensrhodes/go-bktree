@@ -5,7 +5,7 @@ Go-bktree provides an implementation of [BK-tree](http://en.wikipedia.org/wiki/B
 # Fork Info
 Forked from github.com/hjr265/go-bktree.
 Following features added:
-- Saving and reading from file via Protocol Bıffers serialization.
+- Saving and reading from file via Protocol Buffers serialization.
 
 ## Installation
 
