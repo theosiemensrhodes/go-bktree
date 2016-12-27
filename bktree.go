@@ -44,7 +44,7 @@ func (t *BKTree) ReadFromFile(dbFile string) (err error) {
 // Serialize into file
 func (t *BKTree) SaveToFile(filePath string) (saved bool, err error) {
 	saved = false
-	if t.dirty && t.root != nil {
+	if t.root != nil {
 		var data []byte
 		data, err = proto.Marshal(t.root)
 		if err != nil {return}
