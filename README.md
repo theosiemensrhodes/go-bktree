@@ -1,5 +1,6 @@
+[![Build Status](https://travis-ci.org/bahadrix/go-bktree.svg?branch=master)](https://travis-ci.org/bahadrix/go-bktree)
 # Go-bktree
-
+https://travis-ci.org/bahadrix/go-bktree.svg?branch=master
 Go-bktree provides an implementation of [BK-tree](http://en.wikipedia.org/wiki/BK-tree).
 
 # Fork Info
