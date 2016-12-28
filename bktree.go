@@ -28,7 +28,7 @@ func New(m Metric) *BKTree {
 	}
 }
 
-// Read data structures from file
+// Reads data from file and deserialize into tree
 func (t *BKTree) ReadFromFile(dbFile string) (err error) {
 	data, err := ioutil.ReadFile(dbFile)
 	if err != nil {return}
@@ -41,7 +41,8 @@ func (t *BKTree) ReadFromFile(dbFile string) (err error) {
 	return
 }
 
-// Serialize into file
+// Serializes data and saves into file
+// If tree is empty no operation will be made and 'saved' parameter returns false.
 func (t *BKTree) SaveToFile(filePath string) (saved bool, err error) {
 	saved = false
 	if t.root != nil {
