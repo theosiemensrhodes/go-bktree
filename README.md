@@ -19,7 +19,7 @@ The only dependency is the Go distribution itself.
 
 ## Documentation
 
-- [Reference](http://godoc.org/github.com/hjr265/go-bktree)
+- [Reference](http://godoc.org/github.com/bahadrix/go-bktree)
 
 ## Contributing
 
