@@ -34,7 +34,7 @@ func (t *BKTree) Add(w string) {
 func (t *BKTree) Find(w string, n int) []string {
 	r := []string{}
 	if t.root != nil {
-		r = t.root.find(w, n, -1, t.Metric, r)
+		r = t.root.find(w, n, t.Metric, r)
 	}
 	return r
 }
@@ -53,7 +53,7 @@ func (e *node) add(w string, m Metric) {
 	}
 }
 
-func (e *node) find(w string, n, d int, m Metric, r []string) []string {
+func (e *node) find(w string, n int, m Metric, r []string) []string {
 	l := m(e.word, w)
 	if l <= n {
 		r = append(r, e.word)
@@ -63,7 +63,7 @@ func (e *node) find(w string, n, d int, m Metric, r []string) []string {
 			continue // Skip negative distances
 		}
 		if c, ok := e.childs[i]; ok {
-			r = c.find(w, n, d, m, r)
+			r = c.find(w, n, m, r)
 		}
 	}
 	return r
