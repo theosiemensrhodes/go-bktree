@@ -58,10 +58,10 @@ func (e *node) find(w string, n, d int, m Metric, r []string) []string {
 	if l <= n {
 		r = append(r, e.word)
 	}
-	if d == -1 {
-		d = l
-	}
-	for i := n - d; i <= n+d; i++ {
+	for i := l - n; i <= l+n; i++ {
+		if i < 0 {
+			continue // Skip negative distances
+		}
 		if c, ok := e.childs[i]; ok {
 			r = c.find(w, n, d, m, r)
 		}

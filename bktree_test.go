@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/arbovm/levenshtein"
+	"github.com/agnivade/levenshtein"
 )
 
 func TestFindSm(t *testing.T) {
@@ -36,29 +36,31 @@ func BenchmarkFindLg(b *testing.B) {
 }
 
 func testFind(t *testing.T, dict []string) {
-	bk := New(levenshtein.Distance)
+	bk := New(levenshtein.ComputeDistance)
 
 	for _, w := range dict {
 		bk.Add(w)
 	}
 
-	for i := 0; i < 128; i++ {
-		m := mess(pick(dict), 4)
+	for _, w := range dict {
+		for k := 0; k < 5; k++ {
+			m := mess(w, k)
 
-		r := bk.Find(m, 4)
-		if len(r) == 0 {
-			t.FailNow()
-		}
-		for _, w := range r {
-			if levenshtein.Distance(m, w) > 4 {
+			r := bk.Find(m, k)
+			if len(r) == 0 {
 				t.FailNow()
+			}
+			for _, found_w := range r {
+				if levenshtein.ComputeDistance(m, found_w) > k {
+					t.FailNow()
+				}
 			}
 		}
 	}
 }
 
 func benchmarkFind(b *testing.B, dict []string) {
-	bk := New(levenshtein.Distance)
+	bk := New(levenshtein.ComputeDistance)
 
 	for _, w := range dict {
 		bk.Add(w)
