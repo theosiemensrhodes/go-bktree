@@ -6,7 +6,8 @@
 package bktree
 
 import (
-	"io/ioutil"
+	"os"
+
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -17,24 +18,28 @@ type Metric func(a, b []byte) int
 type BKTree struct {
 	Metric Metric // Metric function, required
 	root   *Node
-	dirty bool
+	dirty  bool
 }
 
 // New returns an initialized BK-tree.
 func New(m Metric) *BKTree {
 	return &BKTree{
 		Metric: m,
-		dirty: false,
+		dirty:  false,
 	}
 }
 
 // Reads data from file and deserialize into tree
 func (t *BKTree) ReadFromFile(dbFile string) (err error) {
-	data, err := ioutil.ReadFile(dbFile)
-	if err != nil {return}
+	data, err := os.ReadFile(dbFile)
+	if err != nil {
+		return
+	}
 	root := &Node{}
 	err = proto.Unmarshal(data, root)
-	if err != nil {return}
+	if err != nil {
+		return
+	}
 
 	t.root = root
 
@@ -48,9 +53,13 @@ func (t *BKTree) SaveToFile(filePath string) (saved bool, err error) {
 	if t.root != nil {
 		var data []byte
 		data, err = proto.Marshal(t.root)
-		if err != nil {return}
-		err = ioutil.WriteFile(filePath, data, 0644)
-		if err != nil {return}
+		if err != nil {
+			return
+		}
+		err = os.WriteFile(filePath, data, 0644)
+		if err != nil {
+			return
+		}
 		t.dirty = false
 		saved = true
 	}
@@ -72,11 +81,10 @@ func (t *BKTree) Add(data []byte) {
 func (t *BKTree) Find(data []byte, n int64) [][]byte {
 	r := [][]byte{}
 	if t.root != nil {
-		r = t.root.Find(data, n, -1, t.Metric, r)
+		r = t.root.Find(data, n, t.Metric, r)
 	}
 	return r
 }
-
 
 func (e *Node) Add(data []byte, m Metric) {
 	d := int64(m(e.Data, data))
@@ -87,19 +95,18 @@ func (e *Node) Add(data []byte, m Metric) {
 	}
 }
 
-func (e *Node) Find(data []byte, n, d int64, m Metric, r [][]byte) [][]byte {
+func (e *Node) Find(data []byte, n int64, m Metric, r [][]byte) [][]byte {
 	l := int64(m(e.Data, data))
 	if l <= n {
 		r = append(r, e.Data)
 	}
-	if d == -1 {
-		d = l
-	}
-	for i := n - d; i <= n+d; i++ {
+	for i := l - n; i <= l+n; i++ {
+		if i < 0 {
+			continue // Skip negative distances
+		}
 		if c, ok := e.Children[i]; ok {
-			r = c.Find(data, n, d, m, r)
+			r = c.Find(data, n, m, r)
 		}
 	}
 	return r
 }
-

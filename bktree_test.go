@@ -1,15 +1,16 @@
 // Copyright 2014 Mahmud Ridwan. All rights reserved.
 package bktree
+
 import (
 	"math/rand"
-	"testing"
-	"github.com/arbovm/levenshtein"
-	"io/ioutil"
 	"os"
+	"testing"
+
+	"github.com/agnivade/levenshtein"
 )
 
-func levenshteinFromBytes(a,b []byte) int {
-	return levenshtein.Distance(string(a), string(b))
+func levenshteinFromBytes(a, b []byte) int {
+	return levenshtein.ComputeDistance(string(a), string(b))
 }
 
 func TestFile(t *testing.T) {
@@ -26,21 +27,25 @@ func testFileRead(t *testing.T, dict []string, filePath string) {
 	bk := New(levenshteinFromBytes)
 	err := bk.ReadFromFile(filePath)
 
-	if err != nil {t.Fatal("Error on reading file.", err)}
+	if err != nil {
+		t.Fatal("Error on reading file.", err)
+	}
 
 	testFindWithBK(t, dict, bk)
 
 }
 
-func testFileWrite(t *testing.T, dict []string) (filePath string){
+func testFileWrite(t *testing.T, dict []string) (filePath string) {
 	bk := New(levenshteinFromBytes)
 
 	for _, w := range dict {
 		bk.Add([]byte(w))
 	}
 
-	file, err := ioutil.TempFile(os.TempDir(), "bktree-test")
-	if err != nil {t.Fatal("Error on saving file.", err.Error())}
+	file, err := os.CreateTemp(os.TempDir(), "bktree-test")
+	if err != nil {
+		t.Fatal("Error on saving file.", err.Error())
+	}
 
 	filePath = file.Name()
 	file.Close()
@@ -87,16 +92,18 @@ func testFind(t *testing.T, dict []string) {
 }
 
 func testFindWithBK(t *testing.T, dict []string, bk *BKTree) {
-	for i := 0; i < 128; i++ {
-		m := mess(pick(dict), 4)
+	for _, w := range dict {
+		for k := 0; k < 5; k++ {
+			m := mess(w, k)
 
-		r := bk.Find([]byte(m), 4)
-		if len(r) == 0 {
-			t.FailNow()
-		}
-		for _, w := range r {
-			if levenshtein.Distance(m, string(w)) > 4 {
+			r := bk.Find([]byte(m), int64(k))
+			if len(r) == 0 {
 				t.FailNow()
+			}
+			for _, found_w := range r {
+				if levenshtein.ComputeDistance(m, string(found_w)) > k {
+					t.FailNow()
+				}
 			}
 		}
 	}
